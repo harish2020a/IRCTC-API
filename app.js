@@ -183,17 +183,15 @@ app.get("/api/trains/availability", (req, res) => {
       .json({ error: "Both source and destination parameters are required." });
   }
 
-  const fetchTrainsQuery = `
-      SELECT T.train_id, T.train_name, (T.seat_capacity - IFNULL(B.total_bookings, 0)) AS available_seats
+  const fetchTrainsQuery = `SELECT T.TrainID, T.train_name, (T.seat_capacity - IFNULL(B.total_bookings, 0)) AS available_seats
       FROM Trains AS T
       LEFT JOIN (
-        SELECT train_id, SUM(num_of_seats) AS total_bookings
+        SELECT TrainID, SUM(num_of_seats) AS total_bookings
         FROM Bookings
         WHERE source = ? AND destination = ?
-        GROUP BY train_id
-      ) AS B ON T.train_id = B.train_id
-      WHERE T.source = ? AND T.destination = ?
-    `;
+        GROUP BY TrainID
+      ) AS B ON T.TrainID = B.TrainID
+      WHERE T.source = ? AND T.destination = ?`;
 
   db.query(
     fetchTrainsQuery,
@@ -229,7 +227,7 @@ app.post("/api/trains/:train_id/book", (req, res) => {
   }
 
   const insertBookingQuery = `
-      INSERT INTO Bookings (user_id, train_id, num_of_seats)
+      INSERT INTO Bookings (UserID, TrainID, num_of_seats)
       VALUES (?, ?, ?)
     `;
 
@@ -271,11 +269,11 @@ app.get("/api/bookings/:booking_id", (req, res) => {
   }
 
   const fetchBookingQuery = `
-      SELECT B.booking_id, B.train_id, T.train_name, B.user_id, B.num_of_seats, B.seat_numbers,
+      SELECT B.BookingID, B.TrainID, T.train_name, B.UserID, B.num_of_seats, B.seat_numbers,
              T.arrival_time_at_source, T.arrival_time_at_destination
       FROM Bookings AS B
-      INNER JOIN Trains AS T ON B.train_id = T.train_id
-      WHERE B.booking_id = ?
+      INNER JOIN Trains AS T ON B.TrainID = T.TrainID
+      WHERE B.BookingID = ?
     `;
 
   db.query(fetchBookingQuery, [bookingId], (err, results) => {
@@ -290,10 +288,10 @@ app.get("/api/bookings/:booking_id", (req, res) => {
 
     const booking = JSON.parse(JSON.stringify(results[0]));
     res.status(200).json({
-      booking_id: booking.booking_id,
-      train_id: booking.train_id,
+      booking_id: booking.BookingID,
+      train_id: booking.TrainID,
       train_name: booking.train_name,
-      user_id: booking.user_id,
+      user_id: booking.UserID,
       no_of_seats: booking.num_of_seats,
       seat_numbers: JSON.parse(booking.seat_numbers),
       arrival_time_at_source: booking.arrival_time_at_source,
