@@ -227,13 +227,14 @@ app.post("/api/trains/:train_id/book", (req, res) => {
   }
 
   const insertBookingQuery = `
-      INSERT INTO Bookings (UserID, TrainID, num_of_seats)
-      VALUES (?, ?, ?)
+      INSERT INTO Bookings (UserID, TrainID, num_of_seats, seat_numbers)
+      VALUES (?, ?, ?, ?)
     `;
 
+  const seat_numbers = generateSeatNumbers(no_of_seats);
   db.query(
     insertBookingQuery,
-    [user_id, trainId, no_of_seats],
+    [user_id, trainId, no_of_seats, JSON.stringify(seat_numbers)],
     (err, result) => {
       if (err) {
         console.error("Error inserting booking into the database:", err);
@@ -243,7 +244,7 @@ app.post("/api/trains/:train_id/book", (req, res) => {
       res.status(201).json({
         message: "Seat booked successfully",
         booking_id: result.insertId,
-        seat_numbers: generateSeatNumbers(no_of_seats),
+        seat_numbers,
       });
     }
   );
@@ -302,7 +303,7 @@ app.get("/api/bookings/:booking_id", (req, res) => {
 
 function verifyToken(token) {
   try {
-    jwt.verify(token, SECRET_KEY);
+    jwt.verify(token, JWT_SECRET);
     return true;
   } catch (error) {
     return false;
